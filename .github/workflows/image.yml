@@ -6,6 +6,7 @@ name: Container image
 
 on:
   push:
+    branches: ["nautilus"]
     tags: ["v*"]
   workflow_dispatch:
 
@@ -37,7 +38,7 @@ jobs:
         with:
           # Lower case on purpose: GHCR rejects capitals, and the owner is
           # written "Jannehy".
-          images: ghcr.io/jannehy/nightshift
+          images: ghcr.io/castorm/nightshift
           tags: |
             type=semver,pattern={{version}}
             type=raw,value=latest
@@ -45,7 +46,7 @@ jobs:
       - uses: docker/build-push-action@v7
         with:
           context: .
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
