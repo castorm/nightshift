@@ -389,7 +389,11 @@
       async function startDownload() {
         const url = urlInput.value.trim();
         if (!url) return;
-        reset(); showPanels(); setBusy(true); lastLen = 0;
+        // Nautilus patch: the backend is a serial FIFO queue, so keep the form
+        // usable while a job runs and let the user enqueue more downloads.
+        const alreadyBusy = submitBtn.disabled;
+        if (!alreadyBusy) { reset(); showPanels(); lastLen = 0; }
+        setBusy(true);
         setProgress(3, "nightly.running");
         let res;
         try {
@@ -404,6 +408,9 @@
           card.classList.add("err"); setBusy(false);
           return;
         }
+        urlInput.value = "";
+        submitBtn.disabled = false; urlInput.disabled = false;
+        addLog("+ " + url + "  (pos " + res.position + ")");
         if (res.position > 0) {
           setProgress(2, "download.queued", res.position);
         } else {
