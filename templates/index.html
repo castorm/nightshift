@@ -283,7 +283,9 @@
         statusText.textContent = "…";
       }
       function setBusy(b) {
-        submitBtn.disabled = b; urlInput.disabled = b;
+        // Nautilus patch: downloads can be enqueued while another one runs
+        // (the backend is a serial FIFO queue), so the form stays usable.
+        // Only the exclusive nightly run is gated.
         nightlyBtn.disabled = b;
       }
       function showPanels() {
@@ -389,10 +391,9 @@
       async function startDownload() {
         const url = urlInput.value.trim();
         if (!url) return;
-        // Nautilus patch: the backend is a serial FIFO queue, so keep the form
-        // usable while a job runs and let the user enqueue more downloads.
-        const alreadyBusy = submitBtn.disabled;
-        if (!alreadyBusy) { reset(); showPanels(); lastLen = 0; }
+        // Nautilus patch: keep the form usable while a job runs so the user can
+        // enqueue more downloads; only reset the panel when nothing is tracked.
+        if (!pollTimer && !queueTimer) { reset(); showPanels(); lastLen = 0; }
         setBusy(true);
         setProgress(3, "nightly.running");
         let res;
@@ -409,7 +410,6 @@
           return;
         }
         urlInput.value = "";
-        submitBtn.disabled = false; urlInput.disabled = false;
         addLog("+ " + url + "  (pos " + res.position + ")");
         if (res.position > 0) {
           setProgress(2, "download.queued", res.position);
